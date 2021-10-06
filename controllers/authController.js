@@ -11,10 +11,7 @@ class authController {
             }
 
             const user = await User.findOne({ username });
-            if (!user)
-                return res
-                    .status(400)
-                    .json({ message: "Пользователя не существует" });
+            if (!user) return res.status(400).json({ message: "Пользователя не существует" });
             if (user.password !== password)
                 return res.status(400).json({ message: "Пароли не совпадают" });
 
@@ -45,7 +42,7 @@ class authController {
             res.json(user);
         } catch (e) {
             console.log(e);
-            res.status(200).json("Произошла ошибка");
+            res.status(400).json("Произошла ошибка");
         }
     }
 }

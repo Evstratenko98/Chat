@@ -15,9 +15,9 @@ const PORT = process.env.PORT || 5000;
 
 const server = http.createServer(app);
 const io = socketio(server, {
-   cors: {
-      origin: "*",
-   },
+    cors: {
+        origin: "*",
+    },
 });
 
 app.use(cors());
@@ -27,37 +27,44 @@ app.use("/db", dbRouter);
 app.use(cookie());
 
 io.on("connection", (socket) => {
-   console.log("user is connected");
+    socket.on("subscribe", ({ username, roomId }) => {
+        socket.join(roomId);
+        io.to(roomId).emit(`alert`, {
+            text: `${username} вошёл в комнату!`,
+            sender: "Admin",
+        });
+    });
+    socket.on("unsubscribe", ({ username, roomId }) => {
+        console.log(`${username} is left room ${roomId}`);
+        socket.leave(roomId);
+        io.to(roomId).emit(`alert`, {
+            text: `${username} вышел из комнаты!`,
+            sender: "Admin",
+        });
+    });
+    socket.on("sendMessage", ({ roomId, sender, text }) => {
+        io.to(roomId).emit("message", {
+            sender,
+            text,
+        });
+    });
 
-   socket.on("join", ({ username, roomId }) => {
-      socket.join(roomId);
-      socket.broadcast.to(roomId).emit("message", {
-         sender: "Admin",
-         text: `${username} has joined!`,
-      });
-   });
-
-   socket.on("sendMessage", (message, username, roomId, callback) => {
-      console.log(message, username, roomId);
-      io.to(roomId).emit("message", { sender: username, text: message });
-
-      callback();
-   });
-
-   socket.on("disconnect", ({ username, roomId }, callback) => {
-      io.to(roomId).emit("message", {
-         sender: "Admin",
-         text: `${username} has left!`,
-      });
-   });
+    // socket.on("sendMessage", ({ message, username, roomId }, callback) => {
+    //     io.sockets.in(roomId).emit("message", {
+    //         message,
+    //         username,
+    //         roomId,
+    //     });
+    //     callback();
+    // });
 });
 
 const start = async () => {
-   await mongoose.connect(process.env.DB_URL, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-   });
-   server.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+    await mongoose.connect(process.env.DB_URL, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+    });
+    server.listen(PORT, () => console.log(`Server started on port ${PORT}`));
 };
 
 start();
