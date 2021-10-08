@@ -35,7 +35,6 @@ io.on("connection", (socket) => {
         });
     });
     socket.on("unsubscribe", ({ username, roomId }) => {
-        console.log(`${username} is left room ${roomId}`);
         socket.leave(roomId);
         io.to(roomId).emit(`alert`, {
             text: `${username} вышел из комнаты!`,
@@ -43,9 +42,11 @@ io.on("connection", (socket) => {
         });
     });
     socket.on("sendMessage", ({ roomId, sender, text }) => {
+        const _id = mongoose.Types.ObjectId();
         io.to(roomId).emit("message", {
             sender,
             text,
+            _id,
         });
     });
 
